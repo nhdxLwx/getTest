@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<link rel="stylesheet" href="../css/common.css">
+<link rel="stylesheet" href="../css/main.css">
+<script type="text/javascript" src="../js/jquery-2.2.3.min.js"></script>
+
+<style type="text/css">
+.error_tip, #errmsg {
+	height: 30px;
+	line-height: 30px;
+	margin-left: 80px;
+	color: #E62E2E;
+	display: none; /*超出部分隐藏*/
+}
+</style>
+</head>
+<body>
+	<div id="forms" class="mt10">
+		<div class="box">
+			<div class="box_border">
+				<div class="box_top">
+					<b class="pl15">添加商品信息</b>
+				</div>
+				<div class="box_center">
+					<form id="myform">
+						<table class="form_table pt15 pb15" width="100%" border="0"
+							cellpadding="0" cellspacing="0">
+							<tr>
+								<td class="td_right" style="width:10%">图书类型：</td>
+								<td style="width:30%"><select class="select" name="tid" id="booksType"
+									style="width: 100px;">
+
+								</select></td>
+								<td class="td_right" style="width:20%">图书名称：</td>
+								<td><input type="text" id="bname" name="bname"
+									class="input-text lh30" size="40" placeholder="请输入图书名称">
+									<span class="error_tip" style="width: 20%">提示信息</span></td>
+
+							</tr>
+							<tr>
+								<td class="td_right" style="width:10%">图书单价：</td>
+								<td style="width:30%"><input type="text" id="price" name="price" style="width:40%"
+									class="input-text lh30" size="40" placeholder="单价" /> <span
+									class="error_tip">提示信息</span></td>
+								<td class="td_right">图书作者：</td>
+								<td><input type="text" id="author" name="author"
+									class="input-text lh30" size="40" placeholder="请输入图书作者" /> <span
+									class="error_tip">提示信息</span></td>
+							</tr>
+							<tr>
+								<!--  colspan属性， colspan="x" 表示表格单元横跨x列 -->
+								<td colspan="4" align="center"><input type="button"
+									name="button" class="btn btn82 btn_save2"
+									onclick="addBooksInfo()" value="添加"> <input
+									type="reset" name="button" class="btn btn82 btn_res" value="重置"></td>
+							</tr>
+						</table>
+					</form>
+				</div>
+			</div>
+		</div>
+	</div>
+</body>
+<script type="text/javascript" src="../js/addbookInfo.js"></script>
+<script type="text/javascript">
+	$(function() {
+		findAllType();
+	});
+
+	//加载所有的图书类型
+	function findAllType() {
+		//先用post请求将数据库中所有的图书类型取出
+		$.post("../type/findAll", null, function(data) {
+			if (data == 0) {
+				alter("数据为空");
+				return;
+			}
+			var str = "";
+			//然后字符串拼接
+			$.each(data, function(index, item) {
+				console.log(item.tno + item.tname);
+				str += "<option value='" + item.tno + "'>" + item.tname
+						+ "</option>";
+			});
+			$("#booksType").html("").append($(str));
+		}, "json");
+	}
+	
+	//判断格式是否正常
+	function isTure() {
+		//获取书本名称
+		var bname = $.trim($("#bname").val());
+		//获取书本作者
+		var author = $.trim($("#author").val());
+		//获取书本价格
+		var price = $.trim($("#price").val());
+		console.log("名称:" + bname + "   作者:" + author + "   价格:" + price);
+		if (bname == "" || author == "" || price == "") {
+			alert("请检查是否有数据没填");
+			return false;
+		} else {
+			return true;
+		}
+	}
+
+	function addBooksInfo() {
+		//获取书本名称
+		var bname = $.trim($("#bname").val());
+		//获取书本作者
+		var author = $.trim($("#author").val());
+		//获取书本价格
+		var price = $.trim($("#price").val());
+		//获取书本类型
+		var tid = $.trim($("#booksType").val());
+		if(isTure()){
+			console.log("类型:" + tid);
+			$.post("../book/add", {bname:bname,author:author,price:price,tid:tid}, function(data) {
+				if (data > 0) {
+					alert("添加成功！");
+					document.getElementById("myform").reset();
+				}else{
+					alert("添加失败！");
+				}
+			}, "text");
+			//重置的方法
+			
+		}else{
+			return;
+		}
+		
+	}
+	
+</script>
+
+</html>

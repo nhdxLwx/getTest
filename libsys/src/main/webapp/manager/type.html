@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<link rel="stylesheet" href="../css/common.css">
+<link rel="stylesheet" href="../css/main.css">
+<script type="text/javascript" src="../js/jquery.min.js"></script>
+<style type="text/css">
+input{
+	background-color: white;
+    text-align: center;
+}
+</style>
+<script type="text/javascript">
+	$(function() {
+		//加载数据
+		findAll();
+		getPower()
+	});
+
+	//添加图书类型
+	function addTypeInfo() {
+		//获取图书类型
+		var type = $.trim($("#tname").val());
+		if(type == ""){
+			alert("请输入图书类型！");
+		}else{
+			//首先查找是否已经存在改类型
+			$.post("../type/checkType",{tname:type},function(data){
+				if (data == "") {
+					//类型没有重复,则添加
+					 add();
+					 findAll();
+					 //清空输入框的内容
+					 $("#tname").val("");
+				} else {
+					alert("该类型已经存在！");
+					return;
+				}
+			},"text");
+		}
+	}
+	function add() {
+		//获取图书类型
+		var type = $.trim($("#tname").val());
+		$.post("../type/addType",{tname:type},function(data){
+			if (data == 1) {
+				 alert("添加成功");
+				 findAll();
+			} else {
+				alert("添加失败！");
+				return;
+			}
+		},"text");
+	}
+	//查找数据库中所有的图书类型
+	function findAll(){
+		//先用post请求将数据库中所有的图书类型取出
+		$.post("../type/findAll", null, function(data){
+			if(data == 0){
+				alter("数据为空");
+				return;
+			}
+			var str = "";
+			
+			$.each(data, function(index, item) {
+				str += "<tr><td><input type='text' disabled='true' id='" +item.tno+ "' value=" + item.tno + 
+				"></td><td><input type='text' disabled='true' id='" +item.tno+ "1' value=" + item.tname + 
+				"><td name='isTure'><a href='javascript:begin("+item.tno+")'>[修改]</a>&nbsp;&nbsp;<a href='javascript:update("+item.tno+")'>[保存]</a>&nbsp;&nbsp;<a href='javascript:deleteType("+item.tno+")'>[删除]</a>&nbsp;&nbsp</td></tr>;";
+			});
+			$("#bookstype_info").html("").append($(str));
+		},"json");
+	}
+	
+	//将修改属性开启，可以在输入框中进行修改
+	function begin(tno){
+	//通过在tno后加字符，找到对应的输入框
+	var tname = tno + '1';
+	$("#"+tname).attr('disabled',false);	
+}
+	//修改图书类型的方法
+	function update(tno){
+		//获取下标
+		var name_index = tno + '1';
+		//获取修改后的类型名
+		var name = $.trim($("#"+name_index).val());
+		$.post("../type/update", {tno:tno, tname:name}, function(data){
+			var str = "";
+				if(data > 0){
+					alert("修改成功...");
+					findAll();
+				}else{
+					alert("修改失败...");
+				}
+			$("#bookstype_info").html("").append($(str));
+		},"json");
+		
+	}
+	//删除图书类型方法
+	function deleteType(tno){
+		//获取下标
+		var name_index = tno + '1';
+		$.post("../type/deleteType", {tno:tno}, function(data){
+			var str = "";
+				if(data > 0){
+					alert("删除成功...");
+					findAll();
+				}else{
+					alert("删除失败...");
+				}
+			$("#bookstype_info").html("").append($(str));
+		},"json");
+		
+	}
+	
+	//fuction获取权限的判定
+	function getPower() {
+		
+		//通过sessionStorage获取存在里面的power
+		var power = sessionStorage.getItem("power");
+		
+		if(power == "管理员"){
+			//不需要操作
+			console.log("权限为管理员");
+		}else{
+		alert("你的权限为："+power+"，隐藏操作属性");
+		//隐藏操作列
+		$("td[name='isTure']").hide();
+		}
+	}
+</script>
+</head>
+<body>
+	<div id="forms" class="mt10">
+		<div class="box">
+			<div class="box_border">
+				<div class="box_center">
+					<form id="myform">
+						类型名称：<input type="text" id="tname" class="input-text lh30"
+							size="40" />&nbsp;&nbsp; <input type="button" name="button"
+							class="btn btn82 btn_save2" onclick="addTypeInfo()" value="添加" />&nbsp;&nbsp;
+					</form>
+				</div>
+			</div>
+		</div>
+	</div>
+	<div id="table" class="mt10">
+		<div class="box span10 oh">
+			<table width="100%" border="0" cellpadding="0" cellspacing="0"
+				class="list_table">
+				<thead>
+					<tr>
+						<th width="20%">类型编号</th>
+						<th width="50%">类型名称</th>
+						<th>操作</th>
+					</tr>
+				</thead>
+				<tbody id="bookstype_info" align="center">
+
+				</tbody>
+			</table>
+			<div class="page mt10">
+			
+			</div>
+		</div>
+	</div>
+
+</body>
+</html>

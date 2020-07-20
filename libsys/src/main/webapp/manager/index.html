@@ -1,0 +1,169 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<title>首页</title>
+<meta charset="UTF-8">
+<link rel="stylesheet" href="../css/common.css">
+<link rel="stylesheet" href="../css/style.css">
+<link rel="shortcut icon" href="../images/logo.png" type="image/x-icon" />
+<script type="text/javascript" src="../js/jquery.min.js"></script>
+<script type="text/javascript" src="../js/jquery.SuperSlide.js"></script>
+<script type="text/javascript">
+	$(function() {
+		getUserName();
+		getPower();
+		$(".sideMenu").slide({
+			titCell : "h3",
+			targetCell : "ul",
+			defaultIndex : 0,
+			effect : 'slideDown',
+			delayTime : '500',
+			trigger : 'click',
+			triggerTime : '150',
+			defaultPlay : true,
+			returnDefault : false,
+			easing : 'easeInQuint',
+			endFun : function() {
+				scrollWW();
+			}
+		});
+		$(window).resize(function() {
+			scrollWW();
+		});
+	});
+
+	//获取用户名和权限并设置用户名和权限的方法
+	function getUserName() {
+		//获取地址栏中用户姓名
+		var searchURL = window.location.search;
+		searchURL = searchURL.substring(1, searchURL.length);
+		var name = searchURL.split("&")[0].split("=")[1];
+		
+		//docodeURI将地址栏中的中文转码解码
+		var power= decodeURI(searchURL.split("&")[1].split("=")[1]);
+		
+		//将地址栏的姓名设置在页面中
+		$("#userName").text(name);
+		$("#power").text(power);
+		
+		//用localStorage设置权限
+		sessionStorage.setItem("power",power);
+	}
+	function scrollWW() {
+		if ($(".side").height() < $(".sideMenu").height()) {
+			$(".scroll").show();
+			var pos = $(".sideMenu ul:visible").position().top - 38;
+			$('.sideMenu').animate({
+				top : -pos
+			});
+		} else {
+			$(".scroll").hide();
+			$('.sideMenu').animate({
+				top : 0
+			});
+			n = 1;
+		}
+	}
+
+	var n = 1;
+	function menuScroll(num) {
+		var Scroll = $('.sideMenu');
+		var ScrollP = $('.sideMenu').position();
+		if (num == 1) {
+			Scroll.animate({
+				top : ScrollP.top - 38
+			});
+			n = n + 1;
+		} else {
+			if (ScrollP.top > -38 && ScrollP.top != 0) {
+				ScrollP.top = -38;
+			}
+			if (ScrollP.top < 0) {
+				Scroll.animate({
+					top : 38 + ScrollP.top
+				});
+			} else {
+				n = 1;
+			}
+			if (n > 1) {
+				n = n - 1;
+			}
+		}
+	}
+	function showpage(obj, page) {
+		$("#rightMain").attr("src", page);
+		$("#sideMenu li").removeClass("on");
+		$(obj).parent().addClass("on");
+		$("#here_area").text("当前位置：" + $(obj).text());
+	}
+	
+	//根据权限显示相应的内容
+	function getPower() {
+		//通过sessionStorage获取存在里面的power
+		var power = sessionStorage.getItem("power");
+		//alert(power);
+		if(power == "管理员"){
+			//不需要操作
+			
+		}else{
+		//隐藏管理员的操作页
+		$("li[name='isAdmin']").hide();
+		}
+	}
+</script>
+</head>
+<body>
+	<div class="top">
+		<div id="top_t">
+			<div id="logo" class="fl"></div>
+			<div id="photo_info" class="fr">
+				<div id="photo" class="fl"></div>
+				<div id="base_info" class="fr">
+					<div class="help_info">
+						<a  id="hp">&nbsp;</a> <a id="gy">&nbsp;</a> <a
+							href="../admin/loginout" id="out">&nbsp;</a>
+					</div>
+					<div class="info_center">
+						<a id="userName" name="userName">未知</a>
+						<a style="margin-left:20px">权限:</a>
+						<a id="power" name="power" >未知</a>
+					</div>
+				</div>
+			</div>
+		</div>
+		<div id="side_here">
+			<div id="side_here_l" class="fl"></div>
+			<div id="here_area" class="fl">当前位置：欢迎界面</div>
+		</div>
+	</div>
+	<div class="side">
+		<div class="sideMenu" id="sideMenu" style="margin: 0 auto">
+			<h3>图书类型</h3>
+			<ul>
+				<li ><a href="javascript:void(0)"
+					onclick="showpage(this,'type.html')">添加图书类型</a></li>
+			</ul>
+			<h3>图书信息</h3>
+			<ul>
+				<li name="isAdmin"><a href="javascript:void(0)"
+					onclick="showpage(this,'addbookInfo.html')">添加图书</a></li>
+				<li ><a href="javascript:void(0)"
+					onclick="showpage(this,'view.html')">浏览图书</a></li>
+			</ul>
+		</div>
+	</div>
+	<div class="main">
+		<iframe name="right" id="rightMain" src="welcome.html"
+			frameborder="no" scrolling="auto" width="100%" height="auto"
+			allowtransparency="true"></iframe>
+	</div>
+	<div class="bottom">
+		<div id="bottom_bg">xxx公司&copy;版权所有</div>
+	</div>
+	<div class="scroll">
+		<a href="javascript:;" class="per" title="使用鼠标滚轴滚动侧栏"
+			onclick="menuScroll(1);"></a> <a href="javascript:;" class="next"
+			title="使用鼠标滚轴滚动侧栏" onclick="menuScroll(2);"></a>
+	</div>
+</body>
+</html>

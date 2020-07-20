@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<link rel="stylesheet" href="../css/common.css">
+<link rel="stylesheet" href="../css/main.css">
+<script type="text/javascript" src="../js/jquery.min.js"></script>
+<style type="text/css">
+input {
+	background-color: white;
+	text-align: center;
+}
+</style>
+<script type="text/javascript">
+	$(function() {
+		//加载数据
+		//findAll();
+		//加载页数
+		showPages();
+		
+	});
+
+	//查找数据库中所有的图书,查询所有图书版,没有分页显示
+	function findAll(){
+		$.post("../book/findAll", null, function(data){
+			if(data == 0){
+				alter("数据为空");
+				return;
+			}
+			var str = "";
+			$.each(data, function(index, item) {
+				str += "<tr><td><input type='text' disabled='true' id='" +item.bid+ "' value=" + item.bid + 
+				"></td><td><input type='text' disabled='true' id='" +item.bid+ "1' value=" + item.bname + 
+				//"></td><td><input type='text' disabled='true' id='" +item.bid+ "2' value=" + item.tname +
+				"></td><td><select  name= 'typeChoose' disabled='true' style='background-color: white;' id='" +item.bid+ "2' value=" + item.tid +
+				"></td><td><input type='text' disabled='true' id='" +item.bid+ "3' value=" + item.author +
+				"></td><td><input type='text' disabled='true' id='" +item.bid+ "4' value=" + item.price +
+				"><td name='show'><a href='javascript:begin("+item.bid+")'>[修改]</a>&nbsp;&nbsp;<a href='javascript:update("+item.bid+")'>[保存]</a>&nbsp;&nbsp;<a href='javascript:deleteBook("+item.bid+")'>[删除]</a>&nbsp;&nbsp</td></tr>;";
+				findAllType(item.bid,item.tid);
+			});
+			$("#books_info").html("").append($(str));
+		},"json");
+	}
+	
+	//加载所有的图书类型
+	function findAllType(bid,tid) {
+		var tname_index = bid + '2';
+		//先用post请求将数据库中所有的图书类型取出
+		$.post("../type/findAll", null, function(data) {
+			if (data == 0) {
+				alert("数据为空");
+				return;
+			}
+			var str = "";
+			//然后字符串拼接
+			$.each(data, function(index, item) {
+				if(item.tno == tid){
+					//选中状态
+					str += "<option selected value='" + item.tno + "'>" + item.tname
+					+ "</option>";
+				}else{
+					str += "<option value='" + item.tno + "'>" + item.tname
+					+ "</option>";
+				}
+				
+			});
+			$("#"+tname_index).html("").append($(str));
+		}, "json");
+	}
+	
+	//将修改属性开启，可以在输入框中进行修改
+	function begin(bid){
+	//通过在bid后加字符，找到对应的输入框
+	var bname = bid + '1';
+	var tname = bid + '2';
+	var author = bid + '3';
+	var price = bid + '4';
+	$("#"+bname).attr('disabled',false);
+	$("#"+tname).attr('disabled',false);
+	$("#"+author).attr('disabled',false);
+	$("#"+price).attr('disabled',false);
+}
+	//修改图书的方法
+	function update(bid){
+		//获取下标
+		var bname_index = bid + '1';
+		var tname_index = bid + '2';
+		var author_index = bid + '3';
+		var price_index = bid + '4';
+		//获取修改后的属性
+		var bname = $.trim($("#"+bname_index).val());
+		var tname = $.trim($("#"+tname_index).val());
+		var author = $.trim($("#"+author_index).val());
+		var price = $.trim($("#"+price_index).val());
+		if(bname == ""||tname == "" ||author == "" ||price == ""){
+			alert("修改的数据有空值");
+		}else{
+			$.post("../book/update", {bid:bid,bname:bname,tid:tname,author:author,price:price}, function(data){
+					if(data > 0){
+						alert("修改成功...");
+						findAll();
+					}else{
+						alert("修改失败...");
+					}
+			},"json");
+	 	}
+	}
+	//删除图书类型方法
+	function deleteBook(bid){
+		$.post("../book/deleteBook", {bid:bid}, function(data){
+				if(data > 0){
+					alert("删除成功...");
+					findAll();
+				}else{
+					alert("删除失败...");
+				}
+		},"json");
+	}
+	
+	//通过书名查询
+	function findByBname(){
+		//获取书名
+		var bname = $.trim($("#meg").val());
+		console.log("书名为："+bname);
+		//先找，看符合的有多少记录
+		$.post("../book/findByBnameCount", {bname:bname,perPageRows:5}, function(data){
+			//获取后台计算的记录总数，算出总页数
+			totalSize = data.totalRows;
+			pageSize = data.perPageRows;
+			totalPage = Math.ceil(totalSize / pageSize);
+			console.log("totalSize:"+totalSize);
+			console.log("pageSize:"+pageSize);
+			console.log("totalPage:"+totalPage);
+			var pageInfo = '<li class="first-child"><a href="javascript:void()" onclick="findByBnameImp(this, 1)">首页</a></li>';
+			pageInfo += '<li class="active"><a href="javascript:void()" onclick="findByBnameImp(this, 1)">1</a></li>';
+			for (var j = 2; j <= totalPage; j ++) {
+				pageInfo += '<li><a href="javascript:void()" onclick="findByBnameImp(this, ' + j + ')">' + j +'</a></li>';
+			}
+			pageInfo += '<li class="last-child"><a href="javascript:void()" onclick="findByBnameImp(this, ' + totalPage + ')">末页</a></li>';
+			$("#pagination_info").html("").append($(pageInfo));
+		},"json");
+		findByBnameImp(null,1);
+	}
+	
+	//通过书名查询具体
+	function findByBnameImp(obj,currentPage){
+			
+		    var bname = $.trim($("#meg").val());
+			$.post("../book/findByBnameImpl",{bname:bname,currentPage:currentPage,perPageRows:5}, function(data){
+			alert("通过书名查的结果:"+data);
+			if(data == null){
+				alert("没有符合条件数据为空");
+				return;
+			}
+			var str = "";
+			$.each(data, function(index, item) {
+				str += "<tr><td><input type='text' disabled='true' id='" +item.bid+ "' value=" + item.bid + 
+				"></td><td><input type='text' disabled='true' id='" +item.bid+ "1' value=" + item.bname + 
+				//"></td><td><input type='text' disabled='true' id='" +item.bid+ "2' value=" + item.tname +
+				"></td><td><select  name= 'typeChoose' disabled='true' style='background-color: white;' id='" +item.bid+ "2' value=" + item.tid +
+				"></td><td><input type='text' disabled='true' id='" +item.bid+ "3' value=" + item.author +
+				"></td><td><input type='text' disabled='true' id='" +item.bid+ "4' value=" + item.price +
+				"><td name='show'><a href='javascript:begin("+item.bid+")'>[修改]</a>&nbsp;&nbsp;<a href='javascript:update("+item.bid+")'>[保存]</a>&nbsp;&nbsp;<a href='javascript:deleteBook("+item.bid+")'>[删除]</a>&nbsp;&nbsp</td></tr>;";
+				findAllType(item.bid,item.tid);
+			});
+			$("#books_info").html("").append($(str));
+			
+			$("#pagination_info li").removeClass("active");
+			$(obj).parent().addClass("active");
+		},"json");
+			//判定是否显示操作栏
+			getPower();
+	}
+	
+	//通过作者查询
+	function findByAuthor(){
+		//获取作者author
+		var author = $.trim($("#meg").val());
+		if(author ==""){
+			alert("查询数据不能为空");
+			}else{
+					$.post("../book/findByAuthorCount", {author:author,perPageRows:5}, function(data){
+						if(data == ""){
+							alert("没有符合条件数据为空");
+							return;
+						}
+						//获取后台计算的记录总数，算出总页数
+						totalSize = data.totalRows;
+						pageSize = data.perPageRows;
+						totalPage = Math.ceil(totalSize / pageSize);
+						console.log("totalSize:"+totalSize);
+						console.log("pageSize:"+pageSize);
+						console.log("totalPage:"+totalPage);
+						var pageInfo = '<li class="first-child"><a href="javascript:void()" onclick="findByAuthorImp(this, 1)">首页</a></li>';
+						pageInfo += '<li class="active"><a href="javascript:void()" onclick="findByAuthorImp(this, 1)">1</a></li>';
+						for (var j = 2; j <= totalPage; j ++) {
+							pageInfo += '<li><a href="javascript:void()" onclick="findByAuthorImp(this, ' + j + ')">' + j +'</a></li>';
+						}
+						pageInfo += '<li class="last-child"><a href="javascript:void()" onclick="findByAuthorImp(this, ' + totalPage + ')">末页</a></li>';
+						$("#pagination_info").html("").append($(pageInfo));
+					},"json");
+			}
+		findByAuthorImp(null,1);
+	}
+	
+	//通过作者查询具体
+	function findByAuthorImp(obj,currentPage){
+			
+		    var author = $.trim($("#meg").val());
+			$.post("../book/findByAuthorImpl",{author:author,currentPage:currentPage,perPageRows:5}, function(data){
+			//alert("通过作者查的结果:"+data);
+			if(data == ""){
+				alert("没有符合条件数据为空");
+				return;
+			}
+			var str = "";
+			$.each(data, function(index, item) {
+				str += "<tr><td><input type='text' disabled='true' id='" +item.bid+ "' value=" + item.bid + 
+				"></td><td><input type='text' disabled='true' id='" +item.bid+ "1' value=" + item.bname + 
+				//"></td><td><input type='text' disabled='true' id='" +item.bid+ "2' value=" + item.tname +
+				"></td><td><select  name= 'typeChoose' disabled='true' style='background-color: white;' id='" +item.bid+ "2' value=" + item.tid +
+				"></td><td><input type='text' disabled='true' id='" +item.bid+ "3' value=" + item.author +
+				"></td><td><input type='text' disabled='true' id='" +item.bid+ "4' value=" + item.price +
+				"><td name='show'><a href='javascript:begin("+item.bid+")'>[修改]</a>&nbsp;&nbsp;<a href='javascript:update("+item.bid+")'>[保存]</a>&nbsp;&nbsp;<a href='javascript:deleteBook("+item.bid+")'>[删除]</a>&nbsp;&nbsp</td></tr>;";
+				findAllType(item.bid,item.tid);
+			});
+			$("#books_info").html("").append($(str));
+			
+			$("#pagination_info li").removeClass("active");
+			$(obj).parent().addClass("active");
+		},"json");
+			//判断是否显示操作栏
+			getPower();
+	}
+	
+	//根据选择的不同，显示不同的样式
+	function change(val) {
+		switch (val) {
+		case "showAll":
+			$("#btn").css('display', 'inline-block');
+			$("#meg").css('display', 'none');
+			break;
+		case "findByAuthor":
+			$("#meg").css('display', 'inline-block');
+			$("#meg").attr('placeholder', '请输入作者名字');
+			$("#meg").val("");
+			$("#btn").css('display', 'inline-block');
+			break;
+		case "findByBname":
+			$("#meg").css('display', 'inline-block');
+			$("#meg").attr('placeholder', '请输入书名');
+			$("#meg").val("");
+			$("#btn").css('display', 'inline-block');
+			break;
+		}
+	}
+
+	//查询函数
+	function find() {
+		//获取选择查询的方式
+		var choose = $("#goodsType").val();
+		switch (choose) {
+		case "showAll":
+			//findAll();
+			showPages();
+			break;
+		case "findByAuthor":
+			findByAuthor();
+			break;
+		case "findByBname":
+			findByBname();
+			break;
+		}
+	}
+	
+	//显示页数
+	function showPages() {
+			
+		$.post("../book/showPages",{perPageRows:5},function(data){
+			//获取后台计算的记录总数，算出总页数
+			totalSize = data.totalRows;
+			pageSize = data.perPageRows;
+			totalPage = Math.ceil(totalSize / pageSize);
+			
+			var pageInfo = '<li class="first-child"><a href="javascript:void()" onclick="findByPage(this, 1)">首页</a></li>';
+			pageInfo += '<li class="active"><a href="javascript:void()" onclick="findByPage(this, 1)">1</a></li>';
+			for (var i = 2; i <= totalPage; i ++) {
+				pageInfo += '<li><a href="javascript:void()" onclick="findByPage(this, ' + i + ')">' + i +'</a></li>';
+			}
+			pageInfo += '<li class="last-child"><a href="javascript:void()" onclick="findByPage(this, ' + totalPage + ')">末页</a></li>';
+			$("#pagination_info").html("").append($(pageInfo));
+			
+			$.post("../book/findByPage", {currentPage:1,perPageRows:5}, function(data){
+				if(data == 0){
+					alter("数据为空");
+					return;
+				}
+				var str = "";
+				$.each(data, function(index, item) {
+					str += "<tr><td><input type='text' disabled='true' id='" +item.bid+ "' value=" + item.bid + 
+					"></td><td><input type='text' disabled='true' id='" +item.bid+ "1' value=" + item.bname + 
+					//"></td><td><input type='text' disabled='true' id='" +item.bid+ "2' value=" + item.tname +
+					"></td><td><select  name= 'typeChoose' disabled='true' style='background-color: white;' id='" +item.bid+ "2' value=" + item.tid +
+					"></td><td><input type='text' disabled='true' id='" +item.bid+ "3' value=" + item.author +
+					"></td><td><input type='text' disabled='true' id='" +item.bid+ "4' value=" + item.price +
+					"><td name='show'><a href='javascript:begin("+item.bid+")'>[修改]</a>&nbsp;&nbsp;<a href='javascript:update("+item.bid+")'>[保存]</a>&nbsp;&nbsp;<a href='javascript:deleteBook("+item.bid+")'>[删除]</a>&nbsp;&nbsp</td></tr>;";
+					findAllType(item.bid,item.tid);
+				});
+				$("#books_info").html("").append($(str));
+			},"json");
+		},"json");
+		//判断是否显示操作栏
+		getPower();
+	  }
+	
+	//根据页数查找图书
+	function findByPage(obj,page){
+	
+	$.post("../book/findByPage", {currentPage:page,perPageRows:5}, function(data){
+		if(data == 0){
+			alter("数据为空");
+			return;
+		}
+		var str = "";
+		$.each(data, function(index, item) {
+			str += "<tr><td><input type='text' disabled='true' id='" +item.bid+ "' value=" + item.bid + 
+			"></td><td><input type='text' disabled='true' id='" +item.bid+ "1' value=" + item.bname + 
+			//"></td><td><input type='text' disabled='true' id='" +item.bid+ "2' value=" + item.tname +
+			"></td><td><select  name= 'typeChoose' disabled='true' style='background-color: white;' id='" +item.bid+ "2' value=" + item.tid +
+			"></td><td><input type='text' disabled='true' id='" +item.bid+ "3' value=" + item.author +
+			"></td><td><input type='text' disabled='true' id='" +item.bid+ "4' value=" + item.price +
+			"><td name='show'><a href='javascript:begin("+item.bid+")'>[修改]</a>&nbsp;&nbsp;<a href='javascript:update("+item.bid+")'>[保存]</a>&nbsp;&nbsp;<a href='javascript:deleteBook("+item.bid+")'>[删除]</a>&nbsp;&nbsp</td></tr>;";
+			findAllType(item.bid,item.tid);
+		});
+		$("#books_info").html("").append($(str));
+		
+		$("#pagination_info>li").removeClass("active");
+		$(obj).parent().addClass("active");
+	},"json");
+	//判断是否显示操作栏
+	getPower();
+}
+	//fuction获取权限的判定
+	function getPower() {
+		
+		//通过sessionStorage获取存在里面的power
+		var power = sessionStorage.getItem("power");
+		
+		if(power == "管理员"){
+			//不需要操作
+			console.log("权限为管理员");
+		}else{
+		//隐藏操作列
+		alert("你的权限为："+power+"，隐藏操作属性");
+		//console.log("调用隐藏操作");
+		$("td[name='show']").css({"visibility":"hidden"});
+		}
+	}
+</script>
+</head>
+<body>
+	<div id="forms" class="mt10">
+		<div class="box">
+			<div class="box_border">
+				<div class="box_center">
+					<form id="myform">
+						<!-- 查询部分 -->
+						查询方式：<select class="select" name="tid" id="goodsType"
+							onchange="change(this.value)">
+							<option value="showAll" selected="selected">显示所有书籍</option>
+							<option value="findByAuthor">根据作者查询</option>
+							<option value="findByBname">根据书名查询</option>
+						</select> <input type="text" id="meg" class="input-text lh30" size="40"
+							placeholder="。。。" style="display: none;" />&nbsp;&nbsp; <input
+							id="btn" type="button" name="button" class="btn btn82 btn_save2"
+							onclick="find()" value="搜索" />&nbsp;&nbsp;
+					</form>
+				</div>
+			</div>
+		</div>
+	</div>
+	<div id="table" class="mt10">
+		<div class="box span10 oh">
+			<table width="100%" border="0" cellpadding="0" cellspacing="0"
+				class="list_table">
+				<thead>
+					<tr>
+						<th width="10%">书本编号</th>
+						<th width="25%">书本名称</th>
+						<th width="20%">书本类型</th>
+						<th width="20%">书本作者</th>
+						<th width="10%">书本价格</th>
+						<th>操作</th>
+					</tr>
+				</thead>
+				<tbody id="books_info" align="center">
+
+				</tbody>
+			</table>
+			<div class="page mt10">
+				<div class="pagination">
+					<ul id="pagination_info">
+					
+					</ul>
+				</div>
+			</div>
+		</div>
+	</div>
+
+</body>
+</html>

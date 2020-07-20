@@ -1,0 +1,118 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>图书管理系统-注册</title>
+<link rel="shortcut icon" href="images/copylogo.png">
+<link rel="stylesheet" href="css/reset.css">
+<link rel="stylesheet" href="css/reg.css">
+
+
+<script type="text/javascript" src="js/jquery-3.4.1.min.js"></script>
+
+</head>
+
+<body>
+	<!-- 注册布局 -->
+	<div class="register_con">
+		<div class="l_con fl">
+			<a href="#" class="reg_logo fr"><img src="images/logo.png"></a>
+			<div class="reg_slogan fr">读万卷书，行万里路</div>
+			<div class="reg_banner fr"></div>
+		</div>
+
+		<div class="r_con fr">
+			<div class="reg_title clearfix">
+				<h1 class="fl">用户注册</h1>
+				<a href="login.html" class="fr">登录</a>
+			</div>
+			<div class="reg_form clearfix">
+				<form>
+					<ul>
+						<li><label for="nickname">用户名:</label> <input type="text"
+							id="nickname" name="nickname" placeholder="请输入您的用户名" required>
+							<span class="error_tip">提示信息</span></li>
+						<li><label for="pwd">密码:</label> <input type="password"
+							id="pwd" name="pwd" placeholder="请输入6~15位字母、数字还可包含特殊字符">
+							<span class="error_tip">提示信息</span></li>
+						<li><label for="cpwd">确认密码:</label> <input type="password"
+							id="cpwd" name="cpwd" placeholder="请输入确认密码"> <span
+							class="error_tip">提示信息</span></li>
+						<li><label for="power">权限:</label> <select name="power"
+							id="power">
+								<option value="管理员">管理员</option>
+								<option value="用户">用户</option>
+						</select></li>
+						<li class="agreement"><input type="checkbox" id="allow"
+							name="allow" checked> <label for="allow">同意<a
+								href="#">"用户使用协议"</a></label> <span class="error_tip2">提示信息2</span></li>
+						<li><input type="button" id="reg" name="reg"
+							onClick="checkInfo()" value="注 册"> <span
+							class="error_tip">提示信息3</span></li>
+					</ul>
+				</form>
+			</div>
+		</div>
+	</div>
+
+	<script src="js/register.js"></script>
+
+	<script>
+    //注册
+	function register(){
+		//获取用户名
+		var nickname = $.trim($("#nickname").val());
+		//获取密码
+		var pwd = $.trim($("#pwd").val());
+		//获取确认密码
+		var cpwd = $.trim($("#cpwd").val());
+		//获取权限
+		var power = $("#power").val();
+		console.log(power);
+		
+		$.post("admin/register",{aname:nickname, pwd:pwd,power:power},function(data){
+		if (data == 1) {
+			//跳转网页
+			$("#reg").next().html("注册成功，请登录");
+			$("#reg").next().show();
+			
+		} else{
+			$("#reg").next().html("注册失败");
+			$("#reg").next().show();
+		}
+		},"text");
+	}
+
+	
+
+	function checkInfo() {
+		//$("#reg").attr("disabled", "true");
+
+		var name=$.trim($("#nickname").val());
+		//获取密码
+		var pwd = $.trim($("#pwd").val());
+		//获取确认密码
+		var cpwd = $.trim($("#cpwd").val());
+		//获取权限
+		var power = $("#power").val();
+		if(name ==""||pwd==""||cpwd==""||power=="")
+			{
+				alert("有数据没填写完整，请检查!");
+				return;
+			}
+
+		$.post("admin/checkName",{aname:name},function(data){
+			if(data == ""){ //返回为空意味着数据库中没有重名,现在执行注册操作
+				register();
+			}else{  
+					//用户名属性重复了
+					$("#nickname").next().html("用户名已被注册，请更换用户名");
+					$("#nickname").next().show();
+			}
+		},"text")
+	}
+   
+    </script>
+
+</body>
+</html>
